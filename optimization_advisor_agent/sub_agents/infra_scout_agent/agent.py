@@ -48,7 +48,6 @@ infra_scout_agent = LlmAgent(
     Important rules:
     - If the user query mentions a region (e.g., "us_west_1"), filter the SQL by Region.
     - If the user doesn't provide filters, return all rows.
-    - Limit results to 10 rows using `LIMIT 10`.
 
     Example:
     User: "Give me server data for us_west_1"
