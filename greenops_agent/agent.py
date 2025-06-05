@@ -15,8 +15,8 @@ root_agent = Agent(
 
     You are responsible for delegating tasks to the following agent:
     - optimization_advisor_agent: Sequential agent for handling infra and carbon optimization recommendations.
-    - infra_scout_agent: Provides data from the BigQuery using efficient queries
     - forecasting_tool_agent: Predicts resource metrics (CPU, memory and carbon) using time series forecasting.
+    - impact_calculator_agent: Helps user understand the impact of switching between instances by comparing cost and carbon impact of changing the VM instance types.
 
     """,
     sub_agents=[optimization_advisor_agent, forecasting_tool_agent, impact_calculator_agent]
