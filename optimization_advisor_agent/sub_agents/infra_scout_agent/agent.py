@@ -51,7 +51,9 @@ infra_scout_agent = LlmAgent(
 
     Example:
     User: "Give me server data for us_west_1"
-    → You generate: SELECT * FROM `greenops-460813.gcp_server_details.server_metrics` WHERE Region = 'us_west_1' LIMIT 10
+    → You generate: SELECT * FROM `greenops-460813.gcp_server_details.server_metrics` WHERE Region = 'us_west_1'
+
+    Done't just return the query but execute the query using execute_server_query tool and return the data.
     """,
     tools=[execute_server_query],
     output_key="infra_data"

@@ -1,4 +1,5 @@
 from google.adk.agents import LlmAgent
+from impact_calculator_agent.agent import get_on_demand_price
 
 workload_profiler_agent = LlmAgent(
     name="workload_profiler",
@@ -21,11 +22,15 @@ workload_profiler_agent = LlmAgent(
     #### [Instance Type]
     - **Instance ID**: [value]
     - **Issue**: [description]
-    - **Recommendation**: [action]
+    - **Current Instance Type**: [value]
+    - **Recommendation**: [action] [Always give the target replacement instance and explain why this instance type]
     - **Potential Savings**: [estimate]
+
+    Always make sure that for each potential savings section calculate the hourly cost using the tool get_on_demand_price by passing current and target instance types for each and their respective regions (should be in the form us-east1) then use this hourly price to give saving of a month
 
     For the following data:
     {infra_data}
     """,
-    output_key="analysis_results"  # Stores analysis in memory
+    output_key="analysis_results",
+    tools=[get_on_demand_price]
 )

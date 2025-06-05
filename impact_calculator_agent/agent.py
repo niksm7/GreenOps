@@ -39,7 +39,7 @@ def get_on_demand_price(instance_type: str, region: str) -> dict:
 
 
 
-root_agent = Agent(
+impact_calculator_agent = Agent(
     name="impact_calculator_agent",
     model="gemini-2.0-flash",
     description="Agent to calculate and fetch hourly prices of on-demand GCP instance types.",

@@ -1,6 +1,7 @@
 from google.adk.agents import Agent
 from optimization_advisor_agent.agent import optimization_advisor_agent
 from forecaster_agent.agent import forecasting_tool_agent
+from impact_calculator_agent.agent import impact_calculator_agent
 
 root_agent = Agent(
     name="greenops_agent",
@@ -18,5 +19,5 @@ root_agent = Agent(
     - forecasting_tool_agent: Predicts resource metrics (CPU, memory and carbon) using time series forecasting.
 
     """,
-    sub_agents=[optimization_advisor_agent, forecasting_tool_agent]
+    sub_agents=[optimization_advisor_agent, forecasting_tool_agent, impact_calculator_agent]
 )

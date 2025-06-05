@@ -22,6 +22,7 @@ infra_recommender_agent = LlmAgent(
     ## Detailed Recommendations:
     - [Instance ID]
     - [Issue Identified]
+    - [Current Instance Type]
     - [Recommmendation also mentioning which instance type to replace with]
     - [Potential savings based on current and target instance]
     -----------------------------------
