@@ -4,6 +4,7 @@ from google.adk.tools import google_search
 import requests
 from bs4 import BeautifulSoup
 import re
+from greenops_agent.secrets_access_manager import CLIMATIQ_API_KEY
 
 def format_region_for_climatiq(region: str) -> str:
     """
@@ -79,10 +80,7 @@ def get_carbon_emissions_per_hour(current_instance_type: str, current_region: st
     target_region = format_region_for_climatiq(target_region)
     current_region = format_region_for_climatiq(current_region)
 
-    # Retrieve the Climatiq API key from environment variables
-    # api_key = os.getenv("CLIMATIQ_API_KEY")
-    api_key = "9FJ1F02DJH58B115200WB05JK0"
-    if not api_key:
+    if not CLIMATIQ_API_KEY:
         raise ValueError("Please set the CLIMATIQ_API_KEY environment variable.")
 
     # Define the API endpoint
@@ -106,7 +104,7 @@ def get_carbon_emissions_per_hour(current_instance_type: str, current_region: st
 
     # Set up the headers with the API key
     headers = {
-        "Authorization": f"Bearer {api_key}",
+        "Authorization": f"Bearer {CLIMATIQ_API_KEY}",
         "Content-Type": "application/json"
     }
 
