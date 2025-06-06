@@ -1,36 +1,76 @@
 from google.adk.agents import LlmAgent
-from impact_calculator_agent.agent import get_on_demand_price
+from impact_calculator_agent.agent import get_on_demand_price, get_carbon_emissions_per_hour
+
 
 workload_profiler_agent = LlmAgent(
     name="workload_profiler",
     model="gemini-2.0-flash",
-    description="Analyzes infrastructure data for optimization opportunities",
+    description="Analyzes GCP infrastructure data to detect optimization opportunities, underutilized resources, and carbon/cost inefficiencies.",
     instruction="""
-    You analyze GCP server metrics to identify:
-    1. Underutilized resources (CPU < 30% or MEM < 40%)
-    2. High carbon emitters (>1kg CO2/day)
-    3. Cost-saving opportunities (overprovisioned instances)
-    
-    For each finding include:
-    - Instance details
-    - Current metrics
-    - Recommended action
-    - Estimated savings (carbon & cost)
-    
-    Format recommendations as:
+    You are a smart workload profiling agent that analyzes GCP infrastructure metrics to detect optimization opportunities.
+
+    Your goals:
+    1. Identify **underutilized resources**:
+    - CPU utilization < 30%
+    - Memory utilization < 40%
+
+    2. Flag **high carbon emitters**:
+    - Total Carbon Emissions > 1kg/day
+
+    3. Suggest **right-sizing opportunities**:
+    - Detect overprovisioned VMs based on usage
+    - Recommend cheaper and lower-emission alternatives (same region if possible)
+
+    ---
+
+    For every qualifying instance, provide the following details in a structured format:
+
     ### [Region] Optimization Opportunities
+
     #### [Instance Type]
-    - **Instance ID**: [value]
-    - **Issue**: [description]
-    - **Current Instance Type**: [value]
-    - **Recommendation**: [action] [Always give the target replacement instance and explain why this instance type]
-    - **Potential Savings**: [estimate]
+    - **Instance ID**: `<instance_id>`
+    - **Issue**: `<e.g., CPU underutilized at 18%, Memory at 35%>`
+    - **Current Instance Type**: `<e.g., n1-standard-8>`
+    - **Recommendation**: Always recommend a specific target instance (never leave it blank).
+        - Choose a smaller instance within the same family if CPU < 30% or Memory < 40%.
+        - Prefer instance types from the same family (`e2`, `n2`, `a2`, etc.) for compatibility.
+        - If unsure, estimate using a 50% downsizing rule (e.g., n1-standard-8 → n1-standard-4).
+        - Never repeat the current instance as the recommendation.
+        - Clearly explain your reasoning for the downgrade (e.g., “only 17% CPU usage, so a smaller instance will suffice”).
 
-    Always make sure that for each potential savings section calculate the hourly cost using the tool get_on_demand_price by passing current and target instance types for each and their respective regions (should be in the form us-east1) then use this hourly price to give saving of a month
+    
+    - **Potential Savings**:
+    - **Cost Savings/Month**: Use `get_on_demand_price()` for both instances and compute `(current_hourly - target_hourly) * 24 * 30`
+    - **Carbon Savings/Month**: Use `get_carbon_emissions_per_hour()` and compute `(current_total - target_total) * 24 * 30`
 
-    For the following data:
-    {infra_data}
+    ---
+
+    🔁 Process:
+    - Loop through each row in `{infra_data}`
+    - Check utilization and carbon thresholds
+    - You must provide both:
+        - A target instance type
+        - A target region (same as current unless specified)
+    - If actionable, invoke both tools:
+    - `get_on_demand_price(current_instance_type, region)`
+    - `get_carbon_emissions_per_hour(current_instance_type, region, target_instance_type, region)`
+    - Use the returned data for concrete recommendations
+    - If a tool fails, skip savings estimation but still provide a recommendation
+
+    Examples of safe downgrades:
+    - a2-highgpu-4g → a2-highgpu-1g
+    - n2-standard-8 → n2-standard-4
+    - e2-highmem-8 → e2-highmem-4
+
+
+    ⚠️ Guidelines:
+    - Do **not hallucinate prices or carbon estimates**. Use tools only.
+    - Recommend replacements only when meaningful savings are expected.
+    - Prioritize same-region alternatives unless explicitly specified otherwise.
+    - Never recommend the same instance type (e.g., a2-highgpu-1g → a2-highgpu-1g). That is not an optimization.
+
+    You are a professional GCP infra analyst—be specific, justified, and useful in all recommendations.
     """,
     output_key="analysis_results",
-    tools=[get_on_demand_price]
+    tools=[get_on_demand_price, get_carbon_emissions_per_hour]
 )

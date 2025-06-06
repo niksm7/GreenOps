@@ -16,7 +16,28 @@ def format_region_for_climatiq(region: str) -> str:
         return region.lower().replace("-", "_")
 
 
+def normalize_to_gcp_region(region: str) -> str:
+    """
+    Converts formats like 'us_east_1' or 'us-east-1' to standard GCP format like 'us-east1'.
+    
+    Examples:
+    - 'us_east_1' → 'us-east1'
+    - 'us-east-1' → 'us-east1'
+    """
+    if not region:
+        return ""
+    
+    region = region.lower().replace("_", "-")
+    match = re.match(r"([a-z]+)-([a-z]+)-(\d+)", region)
+    if match:
+        return f"{match.group(1)}-{match.group(2)}{match.group(3)}"
+    return region
+
+
 def get_on_demand_price(instance_type: str, region: str) -> dict:
+
+    region = normalize_to_gcp_region(region)
+
     url = f"https://sparecores.com/server/gcp/{instance_type}?showDetails=true"
     headers = {"User-Agent": "Mozilla/5.0"}
 
@@ -103,7 +124,7 @@ def get_carbon_emissions_per_hour(current_instance_type: str, current_region: st
 
     # Process the results for each instance
     emissions_data = {}
-    instance_labels = ["current_instance", "target_instance"]
+    instance_labels = [current_instance_type, target_instance_type]
     for label, result in zip(instance_labels, results):
         if "error" in result:
             emissions_data[label] = {"error": result["error"]}
