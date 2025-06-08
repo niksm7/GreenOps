@@ -55,6 +55,8 @@ forecasting_tool_agent = LlmAgent(
 
     ALWAYS include the table of forecast data having columns date and the target parameter(cpu_util, memory_util, total_carbon) 
     along with a short human-friendly summary of the forecast (e.g., trend direction).
+
+    ALWAYS make sure to execute the query using execute_forecast_query tool and return the data.
     """,
     tools=[execute_forecast_query],
     output_key="forecast_analysis"

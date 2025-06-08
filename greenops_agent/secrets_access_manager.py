@@ -1,4 +1,5 @@
 from google.cloud import secretmanager
+import os
 
 client = secretmanager.SecretManagerServiceClient()
 
@@ -9,4 +10,4 @@ def access_secret(secret_id, version_id=1):
     return response.payload.data.decode("UTF-8")
 
 
-CLIMATIQ_API_KEY = access_secret(secret_id="CLIMATIQ_API_KEY")
+os.environ["CLIMATIQ_API_KEY"] = access_secret(secret_id="CLIMATIQ_API_KEY")

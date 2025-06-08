@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 bq_client = bigquery.Client()
 
 def execute_server_query(sql: str) -> dict:
-    """Executes a BigQuery SQL query and returns up to 10 rows."""
+    """Executes a BigQuery SQL query"""
     try:
         logger.info(f"Executing SQL: {sql}")
         query_job = bq_client.query(sql)
@@ -23,7 +23,7 @@ def execute_server_query(sql: str) -> dict:
         return {
             "status": "success",
             "row_count": len(data),
-            "rows": data[:10]
+            "rows": data
         }
     except Exception as e:
         logger.error(f"Query execution error: {e}")
@@ -53,7 +53,7 @@ infra_scout_agent = LlmAgent(
     User: "Give me server data for us_west_1"
     → You generate: SELECT * FROM `greenops-460813.gcp_server_details.server_metrics` WHERE Region = 'us_west_1'
 
-    Done't just return the query but execute the query using execute_server_query tool and return the data.
+    Don't just return the query but execute the query using execute_server_query tool and return the data.
     """,
     tools=[execute_server_query],
     output_key="infra_data"
