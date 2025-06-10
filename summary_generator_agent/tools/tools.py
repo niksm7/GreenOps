@@ -3,6 +3,8 @@
 from googleapiclient.discovery import build
 from google.oauth2 import service_account
 
+import shutil
+import os
 
 from google.cloud import bigquery
 from datetime import datetime
@@ -10,7 +12,6 @@ import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 
 from googleapiclient.http import MediaFileUpload
-import base64
 
 SCOPES = ["https://www.googleapis.com/auth/documents", "https://www.googleapis.com/auth/drive"]
 SERVICE_ACCOUNT_FILE = "/Users/nikhilmankani/Documents/GreenOps/greenops-service-account-file.json"
@@ -134,6 +135,8 @@ def create_google_doc(title: str, body_content: str) -> dict:
                 insert_image_from_drive(doc_id, img_url, start_index, docs)
                 break  # break inner loop once key is handled
 
+    shutil.rmtree("charts/")
+
     return {
         "doc_url": doc_url,
         "message": f"Your weekly GreenOps report has been created: {doc_url}"
@@ -149,11 +152,14 @@ def run_query(sql):
 def build_charts() -> dict:
     chart_paths = {}
 
+    if not os.path.exists("charts/"):
+        os.mkdir("charts/")
+
     # Chart 1: Time Series
     df_ts = run_query(f"""
         SELECT date, round(sum(total_carbon),2) as value FROM `greenops-460813.gcp_server_details.server_metrics_timeseries` where date < '{datetime.now().strftime('%Y-%m-%d')}' group by date order by date desc limit 7
     """)
-    path1 = "chart1_timeseries.png"
+    path1 = "charts/chart1_timeseries.png"
     plt.figure(figsize=(10, 5))
     plt.plot(df_ts['date'], df_ts['value'], marker='o')
     plt.title("Time Series: Carbon Emissions")
@@ -169,7 +175,7 @@ def build_charts() -> dict:
     df_bar = run_query("""
         SELECT region, round(avg(cpu_util),2) as cpu_util, round(avg(memory_util),2) as memory_util FROM `greenops-460813.gcp_server_details.server_metrics_timeseries` WHERE DATE(date) BETWEEN DATE_SUB(CURRENT_DATE(), INTERVAL 7 DAY) AND DATE_SUB(CURRENT_DATE(), INTERVAL 1 DAY) group by region
     """)
-    path2 = "chart2_bar.png"
+    path2 = "charts/chart2_bar.png"
     x = df_bar['region']
     cpu = df_bar['cpu_util']
     mem = df_bar['memory_util']
@@ -191,7 +197,7 @@ def build_charts() -> dict:
     df_scatter = run_query("""
         SELECT instance_id, round(avg(cpu_util),2) as cpu_util, round(sum(total_carbon),2) as total_carbon FROM `greenops-460813.gcp_server_details.server_metrics_timeseries` WHERE DATE(date) BETWEEN DATE_SUB(CURRENT_DATE(), INTERVAL 7 DAY) AND DATE_SUB(CURRENT_DATE(), INTERVAL 1 DAY) group by instance_id
     """)
-    path3 = "chart3_scatter.png"
+    path3 = "charts/chart3_scatter.png"
     plt.figure(figsize=(8, 6))
     plt.scatter(df_scatter['cpu_util'], df_scatter['total_carbon'], alpha=0.7, c='green')
     plt.title("CPU vs Carbon Emission for Instance IDs")
@@ -207,7 +213,7 @@ def build_charts() -> dict:
     df_area = run_query("""
         SELECT DATE(date) AS day, COUNTIF(cpu_util < 30 OR memory_util < 40) * 100.0 / COUNT(*) AS underutilization_rate FROM `greenops-460813.gcp_server_details.server_metrics_timeseries` WHERE DATE(date) BETWEEN DATE_SUB(CURRENT_DATE(), INTERVAL 7 DAY) AND DATE_SUB(CURRENT_DATE(), INTERVAL 1 DAY) GROUP BY day ORDER BY day
     """)
-    path4 = "chart4_underutilization.png"
+    path4 = "charts/chart4_underutilization.png"
     plt.figure(figsize=(10, 5))
     plt.fill_between(df_area['day'], df_area['underutilization_rate'], color='skyblue', alpha=0.6)
     plt.title("Under-utilization Rate Over Time")
@@ -223,6 +229,3 @@ def build_charts() -> dict:
     plt.close()
 
     return chart_paths
-
-
-print(create_google_doc("Hello World!", "This is chart 1: \n\n [[chart_carbon_timeseries]] \n\n This is chart 2: \n\n [[chart_region_utilization]] \n\nThis is chart 3: \n\n [[chart_cpu_vs_carbon]] \n\nThis is chart 4: \n\n [[chart_underutilization]] \n"))
