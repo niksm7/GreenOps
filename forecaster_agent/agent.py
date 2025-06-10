@@ -1,6 +1,8 @@
 from google.cloud import bigquery
 from google.adk.agents import LlmAgent
 
+import pandas as pd
+import datetime
 
 bq_client = bigquery.Client()
 
@@ -14,11 +16,40 @@ def execute_forecast_query(sql: str) -> dict:
     try:
         query_job = bq_client.query(sql)
         results = query_job.result()
-        rows = [serialize_row(row) for row in results]
-        return {"status": "success", "row_count": len(rows), "rows": rows[:10]}
+        
+        # Convert to DataFrame for easier manipulation
+        df = results.to_dataframe()
+        
+        # Pivot the table to have dates as columns
+        if not df.empty:
+            df['forecast_timestamp'] = pd.to_datetime(df['forecast_timestamp']).dt.date
+            # Pivot the table
+            pivoted_df = df.pivot(
+                index='Instance_ID',
+                columns='forecast_timestamp',
+                values='forecast_value'
+            ).reset_index()
+            
+            # Convert dates to string for JSON serialization
+            pivoted_df.columns = [
+                col.strftime("%Y-%m-%d") if isinstance(col, (datetime.date, pd.Timestamp)) else col
+                for col in pivoted_df.columns
+            ]
+
+            # Convert to dictionary format
+            rows = pivoted_df.to_dict('records')
+            return {
+                "status": "success",
+                "row_count": len(rows),
+                "rows": rows,
+            }
+        else:
+            return {"status": "success", "row_count": 0, "rows": [], "metric": None}
+            
     except Exception as e:
         return {"status": "error", "error_message": str(e)}
-    
+
+
 forecasting_tool_agent = LlmAgent(
     name="forecasting_tool_agent",
     model="gemini-2.0-flash",
@@ -41,7 +72,7 @@ forecasting_tool_agent = LlmAgent(
 
     Generate a valid SQL query of this format:
 
-    SELECT *
+    SELECT Instance_ID, forecast_timestamp, forecast_value
     FROM ML.FORECAST(
     MODEL `model_path_here`,
     STRUCT(horizon_days AS horizon, 0.8 AS confidence_level)

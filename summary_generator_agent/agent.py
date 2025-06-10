@@ -21,9 +21,9 @@ root_agent = LlmAgent(
          - Number of under-utilized servers flagged  
          - Top 2 optimization recommendations  
 
-      3. **Overall Forecast Trends**  
+      3. **Overall Carbon Emission Forecast Trends**  
          - Include timeseries chart: [TIMESERIES_CHART]
-         - 7-day forecast summary  
+         - 7-day forecast summary for carbon emissions of all instances
 
       4. **Consolidated Recommendations**  
          - Include underutilization chart: [AREA_CHART]
@@ -35,7 +35,7 @@ root_agent = LlmAgent(
 
       ### Workflow:
       - Call `optimization_advisor_agent` for optimization findings  
-      - Call `forecasting_tool_agent` for 7-day forecasts  
+      - Call `forecasting_tool_agent` for 7-day forecasts of carbon emissions 
       - Add the following placeholders wherever you feel the charts need to be placed: [[chart_carbon_timeseries]], [[chart_region_utilization]], [[chart_cpu_vs_carbon]], [[chart_underutilization]] 
       - Call `create_google_doc_with_charts_tool` with the formatted content
 
