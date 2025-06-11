@@ -12,15 +12,14 @@ import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 
 from googleapiclient.http import MediaFileUpload
+from summary_generator_agent.markdown_formater import convert_to_google_docs
 
 SCOPES = ["https://www.googleapis.com/auth/documents", "https://www.googleapis.com/auth/drive"]
 SERVICE_ACCOUNT_FILE = "/Users/nikhilmankani/Documents/GreenOps/greenops-service-account-file.json"
-client = bigquery.Client()
-creds = service_account.Credentials.from_service_account_file(SERVICE_ACCOUNT_FILE, scopes=SCOPES)
-drive_service = build('drive', 'v3', credentials=creds)
 
 
-def upload_image_to_drive(image_path):
+def upload_image_to_drive(image_path, drive_service):
+
     file_metadata = {
         'name': image_path.split('/')[-1],
         'mimeType': 'image/png'
@@ -65,16 +64,17 @@ def create_google_doc(title: str, body_content: str) -> dict:
 
     print("Charts built sucessfully! ")
 
-    
-    docs = build("docs", "v1", credentials=creds)
+    creds = service_account.Credentials.from_service_account_file(SERVICE_ACCOUNT_FILE, scopes=SCOPES)
+    drive_service = build('drive', 'v3', credentials=creds)
+    docs_service = build("docs", "v1", credentials=creds)
 
-    doc = docs.documents().create(body={"title": title}).execute()
+    doc = docs_service.documents().create(body={"title": title}).execute()
     doc_id = doc["documentId"]
 
+    requests = convert_to_google_docs(body_content)
+
     # Insert text with placeholders for charts
-    docs.documents().batchUpdate(documentId=doc_id, body={"requests": [
-        {"insertText": {"location": {"index": 1}, "text": body_content}}
-    ]}).execute()
+    docs_service.documents().batchUpdate(documentId=doc_id, body=requests).execute()
 
     # 3. Make it publicly viewable
     drive_service.permissions().create(
@@ -86,8 +86,9 @@ def create_google_doc(title: str, body_content: str) -> dict:
         fields='id'
     ).execute()
 
-    doc_url = f"https://docs.google.com/document/d/{doc_id}/edit"
-    print("Document URL: ", doc_url)
+    google_docs_url = f"https://docs.google.com/document/d/{doc_id}/edit"
+
+    print("Document URL: ", google_docs_url)
 
     # Locate positions to insert images (based on keywords like `[[chart1]]`, etc.)
     chart_inserts = {
@@ -97,12 +98,12 @@ def create_google_doc(title: str, body_content: str) -> dict:
         "[[chart_underutilization]]": chart_paths['underutilization']
     }
 
-    doc_content = docs.documents().get(documentId=doc_id).execute()
+    doc_content = docs_service.documents().get(documentId=doc_id).execute()
     full_text = doc_content.get("body").get("content")
 
     for key, img_path in chart_inserts.items():
         # REFRESH document content after every change
-        doc_content = docs.documents().get(documentId=doc_id).execute()
+        doc_content = docs_service.documents().get(documentId=doc_id).execute()
         full_text = doc_content.get("body").get("content")
 
         for element in full_text:
@@ -114,7 +115,7 @@ def create_google_doc(title: str, body_content: str) -> dict:
                 end_index = element["endIndex"]
                 
                 # Step 1: Delete the placeholder
-                docs.documents().batchUpdate(
+                docs_service.documents().batchUpdate(
                     documentId=doc_id,
                     body={
                         "requests": [
@@ -131,23 +132,30 @@ def create_google_doc(title: str, body_content: str) -> dict:
                 ).execute()
 
                 # Step 2: Upload and insert image
-                img_url = upload_image_to_drive(img_path)
-                insert_image_from_drive(doc_id, img_url, start_index, docs)
+                img_url = upload_image_to_drive(img_path, drive_service)
+                insert_image_from_drive(doc_id, img_url, start_index, docs_service)
                 break  # break inner loop once key is handled
 
     shutil.rmtree("charts/")
 
     return {
-        "doc_url": doc_url,
-        "message": f"Your weekly GreenOps report has been created: {doc_url}"
+        "doc_url": google_docs_url,
+        "message": f"Your weekly GreenOps report has been created: {google_docs_url}"
     }
 
 
 def run_query(sql):
+    client = bigquery.Client()
     query_job = client.query(sql)
     df = query_job.result().to_dataframe()
     return df
 
+def get_weekly_data() -> dict:
+    df_wk_data = run_query("""
+    SELECT instance_id,instance_type, region, ROUND(AVG(cpu_util),3) as average_cpu_utilization, ROUND(AVG(memory_util),3) as average_memory_utilization, ROUND(SUM(total_carbon),3) as total_carbon_emission_kg FROM `greenops-460813.gcp_server_details.server_metrics_timeseries` WHERE DATE(date) BETWEEN DATE_SUB(CURRENT_DATE(), INTERVAL 7 DAY) AND DATE_SUB(CURRENT_DATE(), INTERVAL 1 DAY) group by instance_id,instance_type, region
+    """)
+
+    return df_wk_data.to_dict("records")
 
 def build_charts() -> dict:
     chart_paths = {}

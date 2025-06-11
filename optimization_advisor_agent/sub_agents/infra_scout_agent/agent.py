@@ -12,7 +12,7 @@ bq_client = bigquery.Client()
 def execute_server_query(sql: str) -> dict:
     """Executes a BigQuery SQL query"""
     try:
-        logger.info(f"Executing SQL: {sql}")
+        print(f"Executing SQL: {sql}")
         query_job = bq_client.query(sql)
         results = query_job.result()
         data = [dict(row) for row in results]
@@ -51,7 +51,7 @@ infra_scout_agent = LlmAgent(
 
     Example:
     User: "Give me server data for us_west_1"
-    → You generate: SELECT * FROM `greenops-460813.gcp_server_details.server_metrics` WHERE Region = 'us_west_1'
+    → You generate: SELECT Instance_ID,Average_CPU_Utilization,Instance_Type,Memory_Utilization,Region,Total_Carbon_Emission_in_kg FROM `greenops-460813.gcp_server_details.server_metrics` WHERE Region = 'us_west_1'
 
     Don't just return the query but execute the query using execute_server_query tool and return the data.
     """,

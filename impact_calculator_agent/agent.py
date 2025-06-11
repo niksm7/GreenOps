@@ -6,6 +6,8 @@ from bs4 import BeautifulSoup
 import re
 import os
 
+CLIMATIQ_API_KEY="9FJ1F02DJH58B115200WB05JK0"
+
 def format_region_for_climatiq(region: str) -> str:
     """
     Converts 'us-central1' → 'us_central_1' (Climatiq format).
@@ -36,7 +38,7 @@ def normalize_to_gcp_region(region: str) -> str:
 
 
 def get_on_demand_price(instance_type: str, region: str) -> dict:
-
+    print("Inside on demand region: ", region, " Instance type: ", instance_type)
     region = normalize_to_gcp_region(region)
 
     url = f"https://sparecores.com/server/gcp/{instance_type}?showDetails=true"

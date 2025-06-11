@@ -1,7 +1,10 @@
 from google.adk.agents import Agent
 from optimization_advisor_agent.agent import optimization_advisor_agent
 from forecaster_agent.agent import forecasting_tool_agent
+import os
 from impact_calculator_agent.agent import impact_calculator_agent
+
+os.environ["CLIMATIQ_API_KEY"] = "9FJ1F02DJH58B115200WB05JK0"
 
 root_agent = Agent(
     name="greenops_agent",
