@@ -3,7 +3,7 @@ from google.adk.tools.agent_tool import AgentTool
 from .tools import change_machine_type, is_safe_to_migrate
 from forecaster_agent.agent import forecasting_tool_agent
 
-root_agent = LlmAgent(
+safe_executor_agent = LlmAgent(
     name="safe_executor_agent",
     model="gemini-2.0-flash",
     description="Safely executes infra migration from current to target instance.",

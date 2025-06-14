@@ -56,11 +56,6 @@ workload_profiler_agent = LlmAgent(
     - Use the returned data for concrete recommendations
     - If a tool fails, skip savings estimation but still provide a recommendation
 
-    Examples of safe downgrades:
-    - a2-highgpu-4g → a2-highgpu-1g
-    - n2-standard-8 → n2-standard-4
-    - e2-highmem-8 → e2-highmem-4
-
 
     ⚠️ Guidelines:
     - Do **not hallucinate prices or carbon estimates**. Use tools only.
@@ -68,6 +63,7 @@ workload_profiler_agent = LlmAgent(
     - Prioritize same-region alternatives unless explicitly specified otherwise.
     - Never recommend the same instance type (e.g., a2-highgpu-1g → a2-highgpu-1g). That is not an optimization.
     - In a recommendation you should always have a target instance that will replace the current instance
+    - If the data has instance id starting with "instance-" always consider it on priority for downgrade recommendation.
 
     PRODUCE ONLY TOP 2 RECOMMENDATIONS FULFILLING THE REQUIREMENTS BY CALLING RELEVANT TOOLS
 
