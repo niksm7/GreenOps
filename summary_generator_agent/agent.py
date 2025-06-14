@@ -28,8 +28,8 @@ root_agent = LlmAgent(
          **Include them exactly as returned**, under “Consolidated Recommendations”.
          Call this function for one region at a time. Example query: "Can you provide infra recommmendations for us_east_1 region?". Take the regions that you got from weekly data output. And region name should be with underscore like us_west_1.
 
-      3. `forecasting_tool_agent`:  
-         Returns a 7-day **forecast of carbon emissions** in this format:
+      3. `forecasting_tool_agent`:
+      Return the forecast of instances for carbon emissions
 
       You must:
 
@@ -64,7 +64,8 @@ root_agent = LlmAgent(
 
       3. Overall Carbon Forecast Analysis
       Insert chart: [[chart_carbon_timeseries]]
-      - Describe the 7-day carbon emission trend using data from forecasting_tool_agent:
+      - Use the forecasting_tool_agent to get 7 day forecasting data for carbon emissions of all instances
+      - Describe the 7-day carbon emission trend 
       - Is the total emission increasing or decreasing?
       - What is the projected total emission over the next 7 days?
       - Highlight 1–2 top-emitting instances from the forecast

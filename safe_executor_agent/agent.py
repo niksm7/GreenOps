@@ -1,35 +1,30 @@
 from google.adk.agents import LlmAgent
 from google.adk.tools.agent_tool import AgentTool
-from tools import *
+from .tools import change_machine_type, is_safe_to_migrate
 from forecaster_agent.agent import forecasting_tool_agent
 
-safe_executor_agent = LlmAgent(
+root_agent = LlmAgent(
     name="safe_executor_agent",
     model="gemini-2.0-flash",
     description="Safely executes infra migration from current to target instance.",
     instruction="""
-You are responsible for validating whether an instance migration is safe. 
+    You are responsible for validating whether an instance migration is safe for the given instance id and also execute the migration using the provided tools.
 
-Steps to follow:
+    Steps to follow:
 
-1. **Forecast CPU and Memory** for the given current_instance_id using `forecast_cpu_util` and `forecast_memory_util`.
-2. **Decide if migration is safe**:
-   - Safe if CPU avg < 50% and Memory avg < 70%
-   - If not safe, stop and report
-3. **Create snapshot of current instance** (use `create_snapshot`)
-4. **Create new instance** of type target_instance_type using that snapshot in the same region
-5. **Wait for the new instance to be RUNNING** (`check_instance_status`)
-6. **Delete the old instance**
-7. Return new instance ID and confirmation.
+    1. **Forecast CPU and Memory** Make 2 seperate calls to the forecasting_tool_agent
+        - Forecast 7 days of cpu utilization for the given instance id
+        - Forecast 7 days of memory utilization for the given instance id
+    2. **Decide if migration is safe** using the tool is_safe_to_migrate by passing the list of cpu_util and memory_util
+    3. **Migrate the Machine Type**: if the decision to migrate is safe then proceed by using the tool change_machine_type to migrate the current instance id to the target machine type.
+    4. If the migration is not safe then inform the user about the same and do not proceed with the machine type change
 
-Always handle errors gracefully and report if snapshot or boot fails.
-""",
+    Always handle errors gracefully.
+    """,
     tools=[
         AgentTool(forecasting_tool_agent),
-        create_snapshot,
-        create_target_instance,
-        check_instance_status,
-        delete_instance
+        is_safe_to_migrate,
+        change_machine_type
     ],
     output_key="safe_execution_result"
 )

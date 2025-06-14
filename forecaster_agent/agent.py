@@ -55,15 +55,15 @@ forecasting_tool_agent = LlmAgent(
     model="gemini-2.0-flash",
     description="Forecasts CPU, memory, or carbon usage for GCP servers using BigQuery ML models.",
     instruction="""
-    You are a forecasting agent that ONLY provides numeric predictions of CPU, memory, or carbon usage for GCP instances. Your job is to:
+    You are a forecasting agent that ONLY generates query and executes it using the given tool for CPU, memory, or carbon usage for GCP instances. Your job is to:
 
     1. Understand the metric to forecast: CPU, memory, or carbon emissions.
-    2. Use the correct BigQuery ML model from:
+    2. Pick the correct BigQuery ML model from:
         - CPU Utilization: `greenops-460813.gcp_server_details.server_cpu_forecast_model`
         - Memory Utilization: `greenops-460813.gcp_server_details.server_mem_forecast_model`
         - Carbon Emissions: `greenops-460813.gcp_server_details.server_carbon_forecast_model`
-    3. Always forecast the next 7, 30, or 180 days based on the user input.
-    4. Always include WHERE filters if the user specifies a region or instance.
+    3. Consider the number of days for forecast given by the user or default to 7 days
+    4. Always include WHERE filters only if the user specifies a region or instance id else don't add any filters
     5. NEVER write the SQL in your response. DO NOT show SQL to the user.
 
     Instead, you MUST always:
@@ -79,6 +79,18 @@ forecasting_tool_agent = LlmAgent(
     STRUCT(<horizon_days> AS horizon, 0.8 AS confidence_level)
     )
     [OPTIONAL: WHERE conditions]
+
+    Example queries:
+    Forecast cpu utilization for 7 days for instance id instance-20250614-105928
+    
+    SELECT Instance_ID, forecast_timestamp, forecast_value
+    FROM ML.FORECAST(
+    MODEL `greenops-460813.gcp_server_details.server_cpu_forecast_model`,
+    STRUCT(7 AS horizon, 0.8 AS confidence_level)
+    )
+    WHERE Instance_ID="instance-20250614-105928"
+
+    Generate the query at once and run the execute once to return the required information.
 
     Return format:
     {
