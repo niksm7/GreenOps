@@ -6,8 +6,6 @@ from bs4 import BeautifulSoup
 import re
 import os
 
-CLIMATIQ_API_KEY="9FJ1F02DJH58B115200WB05JK0"
-
 def format_region_for_climatiq(region: str) -> str:
     """
     Converts 'us-central1' → 'us_central_1' (Climatiq format).

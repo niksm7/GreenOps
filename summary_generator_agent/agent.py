@@ -4,8 +4,6 @@ from google.adk.agents import LlmAgent
 from .tools.tools import create_google_doc, get_weekly_data, get_forecast_information
 import os
 
-os.environ["CLIMATIQ_API_KEY"] = "9FJ1F02DJH58B115200WB05JK0"
-
 
 summary_generator_agent = LlmAgent(
     name="weekly_summary_agent",
