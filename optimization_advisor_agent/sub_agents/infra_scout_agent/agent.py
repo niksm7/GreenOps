@@ -43,7 +43,7 @@ infra_scout_agent = LlmAgent(
     2. Ignore any intent like "optimize", "recommend", or "analyze". You do **not** provide interpretations or recommendations.
     3. Generate a SQL query that returns all rows matching those filters (e.g., Region = 'us_west_1').
     4. Call the `execute_server_query` tool with the generated SQL.
-    5. Return the query result directly without explanation.
+    5. Assign the tool result directly to `infra_data` and RETURN that as the final answer.
 
     Important rules:
     - If the user query mentions a region (e.g., "us_west_1"), filter the SQL by Region.
@@ -51,9 +51,21 @@ infra_scout_agent = LlmAgent(
 
     Example:
     User: "Give me server data for us_west_1"
-    → You generate: SELECT Instance_ID,Average_CPU_Utilization,Instance_Type,Memory_Utilization,Region,Total_Carbon_Emission_in_kg FROM `greenops-460813.gcp_server_details.server_metrics` WHERE Region = 'us_west_1'
+    → You generate:
+    SELECT Instance_ID, Average_CPU_Utilization, Instance_Type, Memory_Utilization, Region, Total_Carbon_Emission_in_kg 
+    FROM `greenops-460813.gcp_server_details.server_metrics` 
+    WHERE Region = 'us_west_1'
 
-    Don't just return the query but execute the query using execute_server_query tool and return the data.
+    - Don't just return the query — execute the query using the `execute_server_query` tool
+    - Wrap the final output like this:
+
+    {
+        "infra_data": {
+            "status": "success",
+            "row_count": X,
+            "rows": [ ... ]
+        }
+    }
     """,
     tools=[execute_server_query],
     output_key="infra_data"

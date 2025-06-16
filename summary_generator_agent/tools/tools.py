@@ -14,6 +14,9 @@ import matplotlib.dates as mdates
 from googleapiclient.http import MediaFileUpload
 from summary_generator_agent.markdown_formater import convert_to_google_docs
 
+from forecaster_agent.agent import execute_forecast_query
+
+
 SCOPES = ["https://www.googleapis.com/auth/documents", "https://www.googleapis.com/auth/drive"]
 SERVICE_ACCOUNT_FILE = "/Users/nikhilmankani/Documents/GreenOps/greenops-service-account-file.json"
 
@@ -237,3 +240,52 @@ def build_charts() -> dict:
     plt.close()
 
     return chart_paths
+
+
+def get_forecast_information():
+    """
+    Input: None
+    Use: This tool gives critical information about forecasting of the current week
+    Output:
+    - Total carbon emissions for the week
+    - date with highest projected carbon emission
+    - Top carbon emitting emissions
+    """
+
+    query = """
+    SELECT Instance_ID, forecast_timestamp, forecast_value
+    FROM ML.FORECAST(
+    MODEL `greenops-460813.gcp_server_details.server_carbon_forecast_model`,
+    STRUCT(7 AS horizon, 0.8 AS confidence_level)
+    )
+    """
+
+    rows = execute_forecast_query(query)["rows"]
+
+    date_to_emissions = {}
+    instance_to_emissions = {}
+    total_emission = 0
+
+    for row in rows:
+        instance_id = row["Instance_ID"]
+        instance_emission = 0
+        for date in row:
+            if date != "Instance_ID":
+                if not date_to_emissions.get(date):
+                    date_to_emissions[date] = 0
+                date_to_emissions[date] += row[date]
+                instance_emission += row[date]
+        instance_to_emissions[instance_id] = instance_emission
+        total_emission += instance_emission
+    
+    date_with_highest = sorted(date_to_emissions.items(), key=lambda item: item[1], reverse=True)
+    instance_with_highest = sorted(instance_to_emissions.items(), key=lambda item: item[1], reverse=True)
+
+    return {
+        "Total Carbon Emissions for the week" : round(total_emission, 3),
+        "Date with Highest Emission" : {date_with_highest[0][0] : round(date_with_highest[0][1],3)},
+        "Top 2 Carbon Emitting instances" : [
+            {instance_with_highest[0][0] : round(instance_with_highest[0][1],3)},
+            {instance_with_highest[1][0] : round(instance_with_highest[1][1],3)}
+        ]
+    }

@@ -4,6 +4,7 @@ from forecaster_agent.agent import forecasting_tool_agent
 import os
 from impact_calculator_agent.agent import impact_calculator_agent
 from safe_executor_agent.agent import safe_executor_agent
+from summary_generator_agent.agent import summary_generator_agent
 
 os.environ["CLIMATIQ_API_KEY"] = "9FJ1F02DJH58B115200WB05JK0"
 
@@ -18,6 +19,7 @@ root_agent = Agent(
         - `forecasting_tool_agent`: Provides time-series forecasts for CPU, memory, and carbon emissions.
         - `impact_calculator_agent`: Compares cost and emissions impact between two instance types.
         - `safe_executor_agent`: Executes safe instance migrations based on recommendations.
+        - `summary_generator_agent`: Generates the weekly summary report
 
         ### Instructions:
 
@@ -27,6 +29,7 @@ root_agent = Agent(
         - Call `safe_executor_agent` with this data something like "migrate instance id <`Instance ID`> to instance type <`target instance type`>
         3. If the user asks about **forecasts** or predictions, delegate to `forecasting_tool_agent`.
         4. If the user wants to **compare impact of changing instance types**, delegate to `impact_calculator_agent`.
+        5. If the user wants to **generate the weekly summary report**, delegate to `summary_generator_agent`.
 
         ALWAYS clearly state which agent you're delegating to, and return user-friendly summaries for each action taken.
     """,
@@ -34,6 +37,7 @@ root_agent = Agent(
         optimization_advisor_agent,
         forecasting_tool_agent,
         impact_calculator_agent,
-        safe_executor_agent
+        safe_executor_agent,
+        summary_generator_agent
     ]
 )

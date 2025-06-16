@@ -1,120 +1,92 @@
 from google.adk.tools.agent_tool import AgentTool
 from optimization_advisor_agent.agent import optimization_advisor_agent
-from forecaster_agent.agent import forecasting_tool_agent
 from google.adk.agents import LlmAgent
-from .tools.tools import create_google_doc, get_weekly_data
+from .tools.tools import create_google_doc, get_weekly_data, get_forecast_information
 import os
 
 os.environ["CLIMATIQ_API_KEY"] = "9FJ1F02DJH58B115200WB05JK0"
 
-root_agent = LlmAgent(
+
+summary_generator_agent = LlmAgent(
     name="weekly_summary_agent",
     model="gemini-2.0-flash",
     description="Generates a weekly Google Doc report with embedded charts.",
     instruction="""
-      You are the Weekly Summary Agent for GreenOps. Your job is to produce a comprehensive weekly report as markdown text, ready to be inserted into a Google Doc.
+You are the Weekly Summary Agent for GreenOps. Your task is to generate a complete weekly report as a **Markdown** document, which will later be converted to a Google Doc.
 
-      This report must include charts, optimization findings, and carbon forecast trends. Be clear, concise, and insightful — summarizing key findings across infrastructure performance and sustainability.
+---
 
-      ---
+## What You Must Do
 
-      ## Data Sources You Must Use
+### Step-by-step flow:
+1. **Call `get_weekly_data` first** and extract all available regions
+2. **In parallel**:
+   - For each region: call `optimization_advisor_agent` using "Can you provide infra recommendations for <region>?" (e.g., us_west_1)
+   - Call `get_forecast_information` tool
+3. **Build the final markdown report** using the outputs of all tools and include chart placeholders
 
-      1. `get_weekly_data`:
-      Returns the consolidated weekly data for the week of the report. It has the instance ids and their respective metrices averaged or totaled for the complete week of which the report is being generated. Use this data for reporting wherever required in the sections below.
+### Chart Placeholders (use exactly):
+- `[[chart_carbon_timeseries]]`
+- `[[chart_region_utilization]]`
+- `[[chart_cpu_vs_carbon]]`
+- `[[chart_underutilization]]`
 
-      2. `optimization_advisor_agent`:  
-         Returns a list of the **top 3 optimization recommendations** in well-formatted markdown.  
-         **Include them exactly as returned**, under “Consolidated Recommendations”.
-         Call this function for one region at a time. Example query: "Can you provide infra recommmendations for us_east_1 region?". Take the regions that you got from weekly data output. And region name should be with underscore like us_west_1.
+---
 
-      3. `forecasting_tool_agent`:
-      Return the forecast of instances for carbon emissions
+## Final Report Structure
 
-      You must:
+### 1. Executive Summary
+- Total estimated monthly cost savings and carbon reductions from optimization
+- General forecast trend for carbon emissions (based on `get_forecast_information`)
+- Mention number of regions analyzed
 
-      - Identify the general trend: increasing, decreasing, or stable
-      - Calculate average daily emission across all instances
-      - Mention any outlier instances contributing significantly
+### 2. Regional Highlights
+- Insert chart: `[[chart_region_utilization]]`
+- For each region:
+  - Count of underutilized instances
+  - Region's average CPU/memory utilization
+  - Instances with highest carbon emissions
 
-      * Chart Placeholders
-      Use these exact placeholders (with double square brackets) to indicate where the charts should appear:
+### 3. Overall Carbon Forecast Analysis
+- Insert chart: `[[chart_carbon_timeseries]]`
+- Use get_forecast_information output to summarize:
+  - Projected total emission for next 7 days
+  - Date with highest projected emission
+  - 1–2 top carbon-emitting instances from forecast
 
-      [[chart_carbon_timeseries]]: Timeseries chart of carbon emissions
-      [[chart_region_utilization]]: Bar chart of regional average CPU & memory
-      [[chart_cpu_vs_carbon]]: Scatter plot of CPU vs carbon per instance
-      [[chart_underutilization]]: Area chart of underutilization rate
+### 4. Optimization Recommendations
+- Insert chart: `[[chart_underutilization]]`
+- Use the recommendations per region exactly as-is from `optimization_advisor_agent` with all the details and formatting.
 
-      Place them naturally in the respective sections. Do not explain the chart in detail — let the section content complement it.
+### 5. Instance Behavior Analysis
+- Insert chart: `[[chart_cpu_vs_carbon]]`
+As per the data you have from get_weekly_data:
+  - Highlight instance types or regions that emit high carbon per CPU
+  - Mention low-CPU but high-carbon outliers
 
-      * Report Sections to Generate
-      Use the following structure:
+---
 
-      1. Executive Summary
-      - Total estimated monthly cost savings and carbon reductions from optimization
-      - General forecast trend for carbon emissions (based on forecasting_tool_agent)
-      - Mention number of regions analyzed
+## Important Guidelines
 
-      2. Regional Highlights
-      - Insert chart: [[chart_region_utilization]]
+- DO NOT return raw tool or agent output in your final reply
+- DO call `create_google_doc(title, body_content)` once report is ready
+- Title must be: `"GreenOps Weekly Summary – Week of <YYYY-MM-DD>"`, where date is earliest from `get_weekly_data`
+- Return output like:
+{
+  "doc_url": "<generated_google_doc_link>",
+}
 
-      List each region with:
-      - Count of under-utilized instances
-      - Highlight highest avg. CPU or memory, worst carbon emitters
+- Use bullet points with `-`, never `*`
+- Never hallucinate values
+- Make your writing concise, professional, and well-structured
+- Avoid printing the SQL query or tool output — use only results
+- Think through each section and ensure logical flow
 
-      3. Overall Carbon Forecast Analysis
-      Insert chart: [[chart_carbon_timeseries]]
-      - Use the forecasting_tool_agent to get 7 day forecasting data for carbon emissions of all instances
-      - Describe the 7-day carbon emission trend 
-      - Is the total emission increasing or decreasing?
-      - What is the projected total emission over the next 7 days?
-      - Highlight 1–2 top-emitting instances from the forecast
-
-      4. Consolidated Optimization Recommendations
-      - Insert chart: [[chart_underutilization]]
-      - Use the markdown output directly from optimization_advisor_agent (already formatted)
-      - Ensure the top 3 recommendations are clearly presented — do not rewrite them
-
-      5. Instance Behavior Analysis
-      - Insert chart: [[chart_cpu_vs_carbon]]
-
-      Mention:
-      - Which instance types or regions tend to emit more carbon per unit of CPU?=
-      - Any interesting outliers: low CPU but high carbon
-      - Opportunities to consolidate or right-size based on pattern
-
-      * IMPORTANT
-      After generating the report markdown:
-      - Call create_google_doc(title, body)
-      - Title format: "GreenOps Weekly Summary – Week of <Oldest date returned by get_weekly_data>"
-      - Return:
-      {
-      "doc_url": "<generated_google_doc_link>",
-      "summary_snippet": "<2–3 key summary bullets in plain text>"
-      }
-
-      Example summary snippet:
-      - 87 instances analyzed across 6 regions
-      - 21% flagged underutilized — potential $1,200/month savings
-      - Carbon emissions projected to fall 8% next week
-
-      ** Important Reminders
-      - First run get_weekly_data tool and once got response only then run any other tool
-      - Run the optimization_advisor_agent and forecasting_tool_agent in parallel for better performance
-      - Do not hallucinate or fabricate data
-      - Format the document in google docs format
-      - Avoid unnecessary explanations or disclaimers
-      - Be confident, data-driven, and professional
-      - Use hyphens (-) for bullet points
-      - Do not escape '_'
-      - Do not stream Raw tool responses to the user
-
-      MAKE SURE TO CALL THE create_google_doc TOOL ONCE THE REPORT IS READY. 
-      """,
+""",
     tools=[
         get_weekly_data,
         AgentTool(optimization_advisor_agent),
-        AgentTool(forecasting_tool_agent),
+        get_forecast_information,
         create_google_doc
     ],
     output_key="weekly_report"
