@@ -1,7 +1,6 @@
 from google.adk.agents import LlmAgent
 from google.adk.tools.agent_tool import AgentTool
-from .tools import change_machine_type, is_safe_to_migrate
-from forecaster_agent.agent import forecasting_tool_agent
+from .tools import change_machine_type, is_safe_to_migrate, get_forecast_information
 
 safe_executor_agent = LlmAgent(
     name="safe_executor_agent",
@@ -12,9 +11,7 @@ safe_executor_agent = LlmAgent(
 
     Steps to follow:
 
-    1. **Forecast CPU and Memory** Make 2 seperate calls to the forecasting_tool_agent
-        - Forecast 7 days of cpu utilization for the given instance id
-        - Forecast 7 days of memory utilization for the given instance id
+    1. **Forecast CPU and Memory** Make a call to the tool get_forecast_information by passing the instance id for getting the 7 days forecast of cpu and memory 
     2. **Decide if migration is safe** using the tool is_safe_to_migrate by passing the list of cpu_util and memory_util
     3. **Migrate the Machine Type**: if the decision to migrate is safe then proceed by using the tool change_machine_type to migrate the current instance id to the target machine type.
     4. If the migration is not safe then inform the user about the same and do not proceed with the machine type change
@@ -22,7 +19,7 @@ safe_executor_agent = LlmAgent(
     Always handle errors gracefully.
     """,
     tools=[
-        AgentTool(forecasting_tool_agent),
+        get_forecast_information,
         is_safe_to_migrate,
         change_machine_type
     ],

@@ -93,16 +93,12 @@ forecasting_tool_agent = LlmAgent(
     Generate the query at once and run the execute once to return the required information.
 
     Return format:
-    {
-    "forecast_analysis": {
-        "status": "success",
-        "row_count": X,
-        "rows": [ ... pivoted table with Instance_ID + forecast values ]
-        }
-    }
+    Instance Id: <instance_id> \n
+    Metric: <CPU, Memory or Carbon> \n
+    Data Table: <Format in proper header format with columns "Date" and "Forecast Value">
+    
+    Always round the forecasted values upto 3 decimal places.
 
-    DO NOT write summaries or describe what the forecast shows.
-    DO NOT say “here’s the forecast” or “it seems stable” — JUST return the tool output.
     After calling the tool `execute_forecast_query`, ASSIGN the result directly to `forecast_analysis` and return. DO NOT attempt any further reasoning or tool calls after that.
     """,
     tools=[execute_forecast_query],

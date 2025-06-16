@@ -1,5 +1,6 @@
 from google.cloud import compute_v1
 import time
+from forecaster_agent.agent import execute_forecast_query
 
 # PROJECT_ID = os.environ["GOOGLE_CLOUD_PROJECT"]
 PROJECT_ID = "greenops-460813"
@@ -62,3 +63,41 @@ def change_machine_type(instance_id: str, new_machine_type: str):
     start_op.result()
     wait_for_status(instance_client, PROJECT_ID, zone, instance_id, "RUNNING")
     print("✅ Instance is running with new machine type.")
+
+
+def get_forecast_information(instance_id: str):
+    """
+    Input: instance id
+    Use: This tool gives forecasted data for the given instnace id over 7 days for cpu and memory
+    Output:
+    - forecast data for cpu
+    - forecast data for memory
+    """
+
+    query1 = f"""
+    SELECT Instance_ID, forecast_timestamp, forecast_value
+    FROM ML.FORECAST(
+    MODEL `greenops-460813.gcp_server_details.server_cpu_forecast_model`,
+    STRUCT(7 AS horizon, 0.8 AS confidence_level)
+    )
+    WHERE Instance_ID="{instance_id}"
+    """
+
+    query2 = f"""
+    SELECT Instance_ID, forecast_timestamp, forecast_value
+    FROM ML.FORECAST(
+    MODEL `greenops-460813.gcp_server_details.server_mem_forecast_model`,
+    STRUCT(7 AS horizon, 0.8 AS confidence_level)
+    )
+    WHERE Instance_ID="{instance_id}"
+    """
+
+    cpu_rows = execute_forecast_query(query1)["rows"]
+    mem_rows = execute_forecast_query(query2)["rows"]
+
+    return {
+        "CPU Forecast": cpu_rows,
+        "Memory Forecast": mem_rows
+    }
+
+    
