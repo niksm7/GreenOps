@@ -11,14 +11,14 @@ GOOGLE_COLORS = {
     "red": "#EA4335",
     "yellow": "#FBBC05",
     "green": "#34A853",
-    "background": "#4285F4",
-    "card": "#34A853",
+    "background": "#FAF6E9",
+    "card": "#DDEB9D",
 }
 
 # Set page config with Google colors
 st.set_page_config(
     page_title="GreenOps Agent Chat",
-    page_icon="🍀",
+    page_icon="🌱",
     layout="centered",
     initial_sidebar_state="expanded"
 )
@@ -43,6 +43,10 @@ st.markdown(
     .stChatInput {{
         bottom: 20px;
     }}
+
+    .stBottom > div {{
+        background: var(--background) !important;
+    }}
     
     .stChatInput input {{
         border: 2px solid var(--primary) !important;
@@ -58,6 +62,7 @@ st.markdown(
     [data-testid="stSidebar"] {{
         background-color: var(--card) !important;
         border-right: 1px solid #e0e0e0;
+        color: black;
     }}
     
     .stChatMessage {{
@@ -75,6 +80,23 @@ st.markdown(
         background-color: var(--assistant-bubble);
         border-radius: 18px 18px 18px 0;
         margin-right: 25%;
+    }}
+    
+    [data-testid="stBaseButton-secondary"] {{
+        background-color: #A0C878;
+    }}
+
+    #root > div > div > div > div > section > div > div > div > div > div > div > div > div > div > div > div > p {{
+        color: black;
+    }}
+
+    [data-testid="stAlertContainer"] {{
+        background-color: #F9C0AB;
+        color: black;
+    }}
+
+    [aria-label="Chat message from assistant"] {{
+        color: black;
     }}
     
     .thinking-indicator {{
@@ -122,7 +144,7 @@ st.markdown(
     }}
     
     @keyframes dotFlashing {{
-        0% {{ opacity: 0.2; transform: translateY(2px); }}
+        0% {{ opacity: 0.6; transform: translateY(2px); }}
         100% {{ opacity: 1; transform: translateY(-2px); }}
     }}
     </style>
@@ -203,7 +225,7 @@ def send_message(message):
 
 
 # UI Components
-st.title("🍀 GreenOps Agent Chat")
+st.title("🌱 GreenOps Agent Chat")
 st.caption("Sustainable Cloud Operations powered by Google ADK")
 
 # Sidebar for session management
@@ -226,7 +248,7 @@ with st.sidebar:
 
 # Display chat messages
 for msg in st.session_state.messages:
-    avatar = "👤" if msg["role"] == "user" else "🍀"
+    avatar = "👤" if msg["role"] == "user" else "🌱"
     with st.chat_message(msg["role"], avatar=avatar):
         st.markdown(msg["content"])
 
@@ -241,11 +263,11 @@ if st.session_state.session_id:
         st.session_state.thinking = True
         st.rerun()
 else:
-    st.info("👈 Create a session to start chatting with GreenOps")
+    st.info("👈🏾 Create a session to start chatting with GreenOps")
 
 # Step 1: Show thinking animation while message is pending
 if "pending_message" in st.session_state and st.session_state.get("thinking", False):
-    with st.chat_message("assistant", avatar="🍀"):
+    with st.chat_message("assistant", avatar="🌱"):
         st.markdown(
             '<div class="thinking-indicator">'
             '<div class="dot-flashing"></div>'
