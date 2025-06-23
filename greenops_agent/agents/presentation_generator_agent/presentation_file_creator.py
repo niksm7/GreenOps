@@ -209,6 +209,3 @@ def upload_pptx_and_get_download_link(filepath, filename):
 
     # Download link (not preview)
     return f"https://drive.google.com/uc?id={file_id}&export=download"
-
-
-print(upload_pptx_and_get_download_link("/Users/nikhilmankani/Documents/GreenOps/GreenOps/output1.pptx", "GreenOpsFirstPresentation.pptx"))
