@@ -58,7 +58,9 @@ def create_presentation(content: dict, tool_context: ToolContext):
     content["top_recommendations"]["chart_image_uri"] = CHART_IMAGE_MAP["[[chart_region_utilization]]"]
     content["instance_behavior_insights"]["chart_image_uri"] = CHART_IMAGE_MAP["[[chart_cpu_vs_carbon]]"]
 
-    prs = Presentation("custom_template.pptx")
+    response_template = requests.get("https://storage.googleapis.com/presentation-templates/custom_template.pptx")
+
+    prs = Presentation(BytesIO(response_template.content))
 
     prs.slides._sldIdLst.remove(list(prs.slides._sldIdLst)[0])
 
