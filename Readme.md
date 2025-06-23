@@ -135,6 +135,10 @@ We used the **Google ADK** to build modular, memory-aware agents that pass data 
   * `security_auditor_agent` → for compliance and exposure risks
   * `cost_anomaly_detector_agent` → alert on sudden usage spikes
 
+---
+## IN ACTION: [LIVE HERE](https://greenops-ui-273345197968.us-central1.run.app/)
+
+
 ## 🏆 Final Words
 
 GreenOps isn’t just smart—it’s **strategic, sustainable, and scalable**.
