@@ -58,7 +58,7 @@ def create_presentation(content: dict, tool_context: ToolContext):
     content["top_recommendations"]["chart_image_uri"] = CHART_IMAGE_MAP["[[chart_region_utilization]]"]
     content["instance_behavior_insights"]["chart_image_uri"] = CHART_IMAGE_MAP["[[chart_cpu_vs_carbon]]"]
 
-    prs = Presentation("/Users/nikhilmankani/Documents/GreenOps/GreenOps/greenops_agent/agents/presentation_generator_agent/custom_template.pptx")
+    prs = Presentation("custom_template.pptx")
 
     prs.slides._sldIdLst.remove(list(prs.slides._sldIdLst)[0])
 
