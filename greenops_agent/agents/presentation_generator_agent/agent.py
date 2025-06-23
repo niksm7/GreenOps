@@ -5,7 +5,7 @@ from .tools import get_summary_report_data
 from .presentation_file_creator import create_presentation
 
 
-root_agent = LlmAgent(
+presentation_generator_agent = LlmAgent(
     name="weekly_slide_agent",
     model="gemini-2.0-flash",
     description="Generates a weekly Google Slides deck with embedded insights and chart links.",
@@ -16,13 +16,13 @@ root_agent = LlmAgent(
 
   ---
 
-  ### STEP 1: Call `get_summary_report_data` to get report contents.
+  ### STEP 1: Get the summary report data from the context
   ### STEP 2: Create the json data of summarized content
   ### STEP 3: Pass the generated json to the tool `create_presentation` to create the presentation
 
   ---
 
-  ## Output JSON Format
+  ## JSON Generation Format
 
   {
     "hero_page": {
@@ -38,7 +38,7 @@ root_agent = LlmAgent(
         "content": "<All regions and the number of underutilized instances for each region>",
     },
     "top_recommendations": {
-        "content": "<Top 3 recommendations overall>",
+        "content": "<Top 3 recommendations overall with all the details like instance id, recommendation, cost saving>",
     },
     "instance_behavior_insights": {
         "content": "",
@@ -47,6 +47,16 @@ root_agent = LlmAgent(
 
   ---
 
+  ## FINAL STEP: Call the presentation creation tool
+
+    Once you have constructed the JSON structure above, you MUST call the tool like this:
+
+    ```python
+    create_presentation(presentation_json)
+    ```
+    Replace presentation_json with your actual JSON output.
+
+  ---
   ## Guidelines
   - Never hallucinate values or invent data
   - The content should be concise, presentable and in only text format not markdown 
@@ -58,7 +68,6 @@ root_agent = LlmAgent(
 
   """,
     tools=[
-        get_summary_report_data,
         create_presentation
     ],
     output_key="weekly_slide_deck"

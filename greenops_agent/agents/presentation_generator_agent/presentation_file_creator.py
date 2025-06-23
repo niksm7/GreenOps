@@ -4,14 +4,7 @@ from pptx.dml.color import RGBColor
 from io import BytesIO
 import requests
 from lxml import etree
-
-
-CHART_IMAGE_MAP = {
-    "[[chart_carbon_timeseries]]": "https://drive.google.com/uc?id=1O0q_RVEkP7su4JZUiq-EYv-X7UT2PyXG",
-    "[[chart_region_utilization]]": "https://drive.google.com/uc?id=1yPpUHnbZAQ7NrHEEaZSO_6O4fIh03aZf",
-    "[[chart_cpu_vs_carbon]]": "https://drive.google.com/uc?id=1UiGBkG2U8xziaRmOwOSEgT-0MMg6qJH7",
-    "[[chart_underutilization]]": "https://drive.google.com/uc?id=16SajzXVjPPDazKB_mmY_wBJEHZI6oU4K",
-}
+from google.adk.tools import ToolContext
 
 def get_shape_by_name(slide, target_name):
     for shape in slide.shapes:
@@ -29,7 +22,14 @@ def set_text_with_optional_style(shape, text, font_size=None, font_color=None, b
     for i, line in enumerate(text.split("\n")):
         p = text_frame.add_paragraph() if i > 0 else text_frame.paragraphs[0]
         run = p.add_run()
-        run.text = line.strip()
+
+        line = line.strip()
+
+        if line.startswith("-"):
+            run.text = line[1:].strip()
+        else:
+            run.text = line
+            p._pPr.insert(0, etree.Element("{http://schemas.openxmlformats.org/drawingml/2006/main}buNone"))
 
         if text=="THANK YOU!":
             p._pPr.insert(0, etree.Element("{http://schemas.openxmlformats.org/drawingml/2006/main}buNone"))
@@ -42,11 +42,11 @@ def set_text_with_optional_style(shape, text, font_size=None, font_color=None, b
         if bold is not None:
             font.bold = bold
 
-def create_presentation(content: dict):
+def create_presentation(content: dict, tool_context: ToolContext):
     """
     Input: Dict containting the data for slides
     """
-
+    CHART_IMAGE_MAP = tool_context.state["chart_links"]
     content["forecast_overview"]["chart_image_uri"] = CHART_IMAGE_MAP["[[chart_carbon_timeseries]]"]
     content["regional_utilization"]["chart_image_uri"] = CHART_IMAGE_MAP["[[chart_underutilization]]"]
     content["top_recommendations"]["chart_image_uri"] = CHART_IMAGE_MAP["[[chart_region_utilization]]"]
@@ -126,7 +126,7 @@ def create_presentation(content: dict):
             picture.crop_right = 0
 
 
-    set_text_with_optional_style(get_shape_by_name(slide5, "Text Placeholder 3"), content["top_recommendations"]["content"], font_size=Pt(22))
+    set_text_with_optional_style(get_shape_by_name(slide5, "Text Placeholder 3"), content["top_recommendations"]["content"], font_size=Pt(20))
 
 
     # Top Recommendations

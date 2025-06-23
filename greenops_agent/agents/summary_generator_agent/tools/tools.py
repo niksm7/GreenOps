@@ -16,6 +16,7 @@ from googleapiclient.http import MediaFileUpload
 from greenops_agent.agents.summary_generator_agent.markdown_formater import convert_to_google_docs
 
 from greenops_agent.agents.forecaster_agent.agent import execute_forecast_query
+from google.adk.tools import ToolContext
 
 
 SCOPES = ["https://www.googleapis.com/auth/documents", "https://www.googleapis.com/auth/drive"]
@@ -59,7 +60,7 @@ def insert_image_from_drive(doc_id, image_url, index, docs):
     docs.documents().batchUpdate(documentId=doc_id, body={"requests": [image_request]}).execute()
 
 
-def create_google_doc(title: str, body_content: str) -> dict:
+def create_google_doc(title: str, body_content: str, tool_context: ToolContext) -> dict:
 
     print("Building Charts...")
 
@@ -101,6 +102,8 @@ def create_google_doc(title: str, body_content: str) -> dict:
         "[[chart_underutilization]]": chart_paths['underutilization']
     }
 
+    chart_to_links = {}
+
     doc_content = docs_service.documents().get(documentId=doc_id).execute()
     full_text = doc_content.get("body").get("content")
 
@@ -136,14 +139,16 @@ def create_google_doc(title: str, body_content: str) -> dict:
 
                 # Step 2: Upload and insert image
                 img_url = upload_image_to_drive(img_path, drive_service)
+                chart_to_links[key] = img_url
                 insert_image_from_drive(doc_id, img_url, start_index, docs_service)
                 break  # break inner loop once key is handled
 
     shutil.rmtree("charts/")
 
+    tool_context.state['chart_links'] = chart_to_links
+
     return {
-        "doc_url": google_docs_url,
-        "message": f"Your weekly GreenOps report has been created: {google_docs_url}"
+        "message": f"Your weekly GreenOps report has been created: {google_docs_url}",
     }
 
 
