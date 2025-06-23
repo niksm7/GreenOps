@@ -1,7 +1,6 @@
 # GreenOps Slide Generator ADK Agent (JSON Output for Google Slides)
 
 from google.adk.agents import LlmAgent
-from .tools import get_summary_report_data
 from .presentation_file_creator import create_presentation
 
 
