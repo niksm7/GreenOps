@@ -64,11 +64,15 @@ presentation_generator_agent = LlmAgent(
   - All content should contain atleast 3 points
   - Use clear, concise, formal tone
 
-  Once the presentation is created inform the success status to the user.
+  ---
+    Output Response:
+
+    `Your Presenation is created and can be downloaded from: <Download_link>`
+  ---
 
   """,
     tools=[
         create_presentation
     ],
-    output_key="weekly_slide_deck"
+    output_key="Download_link"
 )

@@ -5,6 +5,12 @@ from io import BytesIO
 import requests
 from lxml import etree
 from google.adk.tools import ToolContext
+from googleapiclient.discovery import build
+from googleapiclient.http import MediaFileUpload
+from google.oauth2 import service_account
+import json
+import os
+from greenops_agent.secrets_access_manager import access_secret
 
 def get_shape_by_name(slide, target_name):
     for shape in slide.shapes:
@@ -154,6 +160,55 @@ def create_presentation(content: dict, tool_context: ToolContext):
     slide7 = prs.slides.add_slide(prs.slide_layouts[6])
     set_text_with_optional_style(get_shape_by_name(slide7, "Text Placeholder 1"), "THANK YOU!", font_size=Pt(70))
 
-    prs.save("output1.pptx")
+    if not os.path.exists("presentations/"):
+        os.mkdir("presentations/")
 
-    return "Success"
+    filename = f"GreenOps Weekly Report {content["hero_page"]["week_date_range"]}.pptx"
+    file_path = f"presentations/{filename}"
+    prs.save(file_path)
+
+    drive_link = upload_pptx_and_get_download_link(file_path, filename)
+
+    os.remove(file_path)
+
+    return {
+        "Download_link": drive_link
+    }
+
+
+def upload_pptx_and_get_download_link(filepath, filename):
+    SCOPES = ['https://www.googleapis.com/auth/drive']
+
+    if not os.environ.get("SERVICE_ACCOUNT_KEY"):
+        os.environ["SERVICE_ACCOUNT_KEY"] = access_secret(secret_id="SERVICE_ACCOUNT_KEY")
+
+    creds = service_account.Credentials.from_service_account_info(json.loads(os.environ["SERVICE_ACCOUNT_KEY"]), scopes=SCOPES)
+
+    drive_service = build('drive', 'v3', credentials=creds)
+
+    media = MediaFileUpload(filepath, mimetype='application/vnd.openxmlformats-officedocument.presentationml.presentation')
+
+    file_metadata = {
+        'name': filename,
+        'mimeType': 'application/vnd.openxmlformats-officedocument.presentationml.presentation'
+    }
+
+    uploaded_file = drive_service.files().create(
+        body=file_metadata,
+        media_body=media,
+        fields='id'
+    ).execute()
+
+    file_id = uploaded_file['id']
+
+    # Make it public (optional)
+    drive_service.permissions().create(
+        fileId=file_id,
+        body={'type': 'anyone', 'role': 'reader'},
+    ).execute()
+
+    # Download link (not preview)
+    return f"https://drive.google.com/uc?id={file_id}&export=download"
+
+
+print(upload_pptx_and_get_download_link("/Users/nikhilmankani/Documents/GreenOps/GreenOps/output1.pptx", "GreenOpsFirstPresentation.pptx"))
