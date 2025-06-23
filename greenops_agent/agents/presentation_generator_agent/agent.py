@@ -2,6 +2,7 @@
 
 from google.adk.agents import LlmAgent
 from .tools import get_summary_report_data
+from .presentation_file_creator import create_presentation
 
 
 root_agent = LlmAgent(
@@ -9,67 +10,56 @@ root_agent = LlmAgent(
     model="gemini-2.0-flash",
     description="Generates a weekly Google Slides deck with embedded insights and chart links.",
     instruction="""
-You are the Slide Generator Agent for GreenOps.
+  You are the Slide Generator Agent for GreenOps.
 
-Your task is to produce a structured **JSON** that defines a visually rich, engaging Google Slides presentation based on sustainability summary data.
+  Your task is to produce a structured **JSON** that defines a visually rich, engaging Google Slides presentation based on sustainability summary data.
 
----
+  ---
 
-### STEP 1: Call `get_summary_report_data` to get report contents.
-### STEP 2: Create slides using engaging elements: columns, charts, highlight blocks, and stylized bullet points.
+  ### STEP 1: Call `get_summary_report_data` to get report contents.
+  ### STEP 2: Create the json data of summarized content
+  ### STEP 3: Pass the generated json to the tool `create_presentation` to create the presentation
 
----
+  ---
 
-## Output JSON Format
+  ## Output JSON Format
 
-```json
-{
-  "title": "GreenOps Weekly Summary – Week of YYYY-MM-DD",
-  "slides": [
-    {
-      "title": "...",
-      "layout": "TITLE_AND_BODY" | "TITLE_AND_IMAGE" | "TITLE_AND_TWO_COLUMNS" | "SECTION_HEADER",
-      "body": "...",     // plain string or bulleted text
-      "columns": [       // Optional: for dual-column layouts
-        { "title": "...", "items": ["...", "..."] },
-        { "title": "...", "items": ["...", "..."] }
-      ],
-      "image_url": "optional_chart_or_graph_link",
-      "style": {
-        "background_color": "#hex",
-        "theme_color": "green" | "blue" | "orange"
-      }
+  {
+    "hero_page": {
+        "week_date_range" : "<Range of the week like 2025-06-16 to 2025-06-23>"
+    },
+    "executive_summary": {
+        "content": ""
+    },
+    "forecast_overview": {
+        "content": "<Overall Carbon Forecast Analysis>"
+    },
+    "regional_utilization": {
+        "content": "<All regions and the number of underutilized instances for each region>",
+    },
+    "top_recommendations": {
+        "content": "<Top 3 recommendations overall>",
+    },
+    "instance_behavior_insights": {
+        "content": "",
     }
-  ]
-}
+  }
 
+  ---
 
+  ## Guidelines
+  - Never hallucinate values or invent data
+  - The content should be concise, presentable and in only text format not markdown 
+  - Use the new line character \\n for every new line
+  - All content should contain atleast 3 points
+  - Use clear, concise, formal tone
 
-Chart placeholders to be used:
-- `[[chart_carbon_timeseries]]`
-- `[[chart_region_utilization]]`
-- `[[chart_cpu_vs_carbon]]`
-- `[[chart_underutilization]]`
+  Once the presentation is created inform the success status to the user.
 
-
-## Main slides
-- Executive Summary
-- Forecast Overview
-- Top Optimization Opportunities
-- Regional Utilization Overview
-- Top 3 Recommendations overall
-- Instance Behavior Insights
-
----
-
-## Guidelines
-- Never hallucinate values or invent data
-- Bullet points: use lists when there are more than one insight
-- Use clear, concise, formal tone
-
-""",
+  """,
     tools=[
-        get_summary_report_data
+        get_summary_report_data,
+        create_presentation
     ],
     output_key="weekly_slide_deck"
 )

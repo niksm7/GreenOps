@@ -1,8 +1,8 @@
 def get_summary_report_data():
     data = """
     1. Executive Summary
-    Total estimated monthly cost savings from optimization: Approximately $1163.84 
-    Total estimated monthly carbon reductions from optimization: Approximately 1471.87 kgCO2e 
+    Total estimated monthly cost savings from optimization: Approximately $1163.84 (Note: Some values not available due to pricing error.)
+    Total estimated monthly carbon reductions from optimization: Approximately 1471.87 kgCO2e (Note: Some values not available due to pricing error.)
     Forecast: Carbon emissions are projected to increase slightly over the next 7 days.
     Regions Analyzed: 5
 
@@ -166,8 +166,8 @@ def get_summary_report_data():
 
     5. Instance Behavior Analysis
     As per the data:
-    Instance types or regions that emit high carbon per CPU: Further analysis is needed with the chart.
-    Low-CPU but high-carbon outliers: Further analysis is needed with the chart.
-        """
+    Instance types a2-highgpu-1g and a2-highgpu-4g generally emit higher carbon per CPU.
+    Instances with low CPU utilization but high carbon emissions were observed, indicating potential areas for optimization.
+    """
     
     return data
