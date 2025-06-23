@@ -163,7 +163,7 @@ def create_presentation(content: dict, tool_context: ToolContext):
     if not os.path.exists("presentations/"):
         os.mkdir("presentations/")
 
-    filename = f"GreenOps Weekly Report {content["hero_page"]["week_date_range"]}.pptx"
+    filename = f"GreenOps Weekly Report {content['hero_page']['week_date_range']}.pptx"
     file_path = f"presentations/{filename}"
     prs.save(file_path)
 
